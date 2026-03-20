@@ -2,6 +2,7 @@ import pypowerwall
 import os
 import logging
 from mqtt_paho import MqttClient
+import time
 
 def get_pw_api():
     host = os.getenv('POWERWALL_HOST', "192.168.91.1")
@@ -22,10 +23,19 @@ def get_mqtt_client():
     return MqttClient(broker, port, client_id, username, password)
 
 def main():
+    logger = logging.getLogger(__name__)
+    poll_time_sec = int(os.getenv('PW_POLL_TIME_S', "10"))
     pw_api = get_pw_api()
     mqtt = get_mqtt_client()
 
-
+    try:
+        while True:
+            logger.info("Polling...")
+            time.sleep(poll_time_sec)
+    except KeyboardInterrupt:
+        logger.info("Stopping...")
+    finally:
+        mqtt.disconnect()
 
 
 if __name__ == '__main__':
