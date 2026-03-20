@@ -1,5 +1,7 @@
 import pypowerwall
 import os
+import logging
+from mqtt_paho import MqttClient
 
 def get_pw_api():
     host = os.getenv('POWERWALL_HOST', "192.168.91.1")
@@ -10,9 +12,23 @@ def get_pw_api():
 
     return pypowerwall.Powerwall(host, password, email, timezone, gw_pwd=gw_pwd, auto_select=True)
 
+def get_mqtt_client():
+    broker = os.getenv('MQTT_BROKER', "localhost")
+    port = int(os.getenv('MQTT_PORT', "1883"))
+    client_id = os.getenv('MQTT_CLIENT_ID', "powerwall2mqtt")
+    username = os.getenv('MQTT_USERNAME')
+    password = os.getenv('MQTT_PASSWORD')
+    
+    return MqttClient(broker, port, client_id, username, password)
+
 def main():
     pw_api = get_pw_api()
+    mqtt = get_mqtt_client()
+
+
+
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     main()
 
