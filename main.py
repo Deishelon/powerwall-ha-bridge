@@ -24,7 +24,7 @@ def get_mqtt_client():
 
 def main():
     logger = logging.getLogger(__name__)
-    poll_time_sec = int(os.getenv('PW_POLL_TIME_S', "10"))
+    poll_time_sec = int(os.getenv('POLL_TIME_S', "10"))
     pw_api = get_pw_api()
     mqtt = get_mqtt_client()
 
