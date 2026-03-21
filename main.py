@@ -144,9 +144,6 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
         return entities
 
     for block_id, block_data in blocks.items():
-        def make_lookup(data, key):
-            return lambda: data[key]
-
         nominal_energy_remaining = block_data['nominal_energy_remaining']
         nominal_full_pack_energy = block_data['nominal_full_pack_energy']
         soc = nominal_energy_remaining / nominal_full_pack_energy * 100
@@ -198,6 +195,7 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
                 state_class=StateClass.measurement,
                 unit="%",
                 lookup=lambda: soc,
+                suggested_display_precision=1,
             ),
         ]
         entities.extend(entities_for_block)
@@ -227,6 +225,7 @@ def fetch_pw_data(
             # level(Scale=False)=60.41666666666667
             # level(Scale=True)=58.33333333333334
             lookup=lambda: pw_api.level(scale=True),
+            suggested_display_precision=1,
         )
     )
 

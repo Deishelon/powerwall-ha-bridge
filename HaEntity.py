@@ -10,7 +10,8 @@ class HaEntity:
             device_class: DeviceClass,
             state_class: StateClass,
             unit: str,
-            lookup: Callable[[], str | int | float]
+            lookup: Callable[[], str | int | float],
+            suggested_display_precision: int | None = None
     ):
         self.component_id = component_id
         self.name = name
@@ -18,6 +19,7 @@ class HaEntity:
         self.state_class = state_class
         self.unit = unit
         self.lookup = lookup
+        self.suggested_display_precision = suggested_display_precision
 
     def state_topic(self, device_id: str, discovery_prefix: str):
         return f"{discovery_prefix}/sensor/{device_id}/{self.component_id}/state"
@@ -40,6 +42,9 @@ class HaEntity:
 
         if self.unit:
             config["unit_of_measurement"] = self.unit
+
+        if self.suggested_display_precision is not None:
+            config["suggested_display_precision"] = self.suggested_display_precision
 
         if device_info:
             config["device"] = device_info
