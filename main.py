@@ -100,6 +100,9 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
     entities = list[HaEntity]()
 
     for pv_id, pv_data in strings.items():
+        def make_lookup(data, key):
+            return lambda: data[key]
+
         entities_for_string = [
             HaEntity(
                 component_id=f"array{pv_id}_voltage",
@@ -107,7 +110,7 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
                 device_class=DeviceClass.VOLTAGE,
                 state_class=StateClass.measurement,
                 unit="V",
-                lookup=lambda: pv_data['Voltage'],
+                lookup=make_lookup(pv_data, 'Voltage'),
             ),
             HaEntity(
                 component_id=f"array{pv_id}_current",
@@ -115,7 +118,7 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
                 device_class=DeviceClass.CURRENT,
                 state_class=StateClass.measurement,
                 unit="A",
-                lookup=lambda: pv_data['Current'],
+                lookup=make_lookup(pv_data, 'Current'),
             ),
             HaEntity(
                 component_id=f"array{pv_id}_power",
@@ -123,7 +126,7 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.measurement,
                 unit="W",
-                lookup=lambda: pv_data['Power'],
+                lookup=make_lookup(pv_data, 'Power'),
             )
         ]
         entities.extend(entities_for_string)
