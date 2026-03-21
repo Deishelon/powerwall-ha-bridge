@@ -1,8 +1,14 @@
+import json
 from logging import Logger
 
 import pypowerwall
 import os
 import logging
+from typing import Callable
+
+from HaCore import DeviceClass, StateClass
+from HaDiscovery import HaDiscovery
+from HaEntity import HaEntity
 from mqtt_paho import MqttClient
 import time
 
@@ -91,6 +97,40 @@ def fetch_pw_data(pw_api: pypowerwall.Powerwall, mqtt: MqttClient, logger: Logge
 
     # INFO:powerwall2mqtt:power={'site': -13, 'solar': 3821, 'battery': -3185, 'load': 621.25}
     logger.info(f"power={pw_api.power()}")
+
+    discovery_prefix = "homeassistant"
+
+    entities = [
+        HaEntity(
+            component_id="solar_generation",
+            name="Solar Generation",
+            device_class=DeviceClass.POWER,
+            state_class=StateClass.measurement,
+            unit="W",
+            lookup=lambda: pw_api.power()['solar'],
+        )
+    ]
+
+    discovery = HaDiscovery(
+        device_id=f"test-{pw_api.status()['din']}",
+        device_name=f"test-{pw_api.site_name()}",
+        firmware=pw_api.version(),
+        model="Powerwall",
+        manufacturer="Tesla",
+    )
+
+    mqtt.publish(
+        topic=f"{discovery_prefix}/device/powerwall2mqtt/config",
+        payload=json.dumps(discovery.get_discovery_payload(entities, discovery_prefix)),
+        retain=True,
+    )
+
+    for entity in entities:
+        mqtt.publish(
+            topic=entity.state_topic(discovery.device_id, discovery_prefix),
+            payload=json.dumps(entity.lookup()),
+            retain=True,
+        )
 
     pass
 
