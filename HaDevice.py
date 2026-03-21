@@ -3,7 +3,7 @@ from typing import List
 import HaEntity
 
 
-class HaDiscovery:
+class HaDevice:
     def __init__(
             self,
             device_id: str,
