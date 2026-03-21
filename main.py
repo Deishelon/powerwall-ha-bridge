@@ -128,12 +128,12 @@ def fetch_pw_data(pw_api: pypowerwall.Powerwall, mqtt: MqttClient, logger: Logge
         manufacturer="Tesla",
     )
 
-    for topic, payload in discovery.get_discovery_payloads(entities, discovery_prefix).items():
-        mqtt.publish(
-            topic=topic,
-            payload=json.dumps(payload),
-            retain=True,
-        )
+    topic, payload = discovery.get_discovery(entities, discovery_prefix)
+    mqtt.publish(
+        topic=topic,
+        payload=json.dumps(payload),
+        retain=True,
+    )
 
     for entity in entities:
         mqtt.publish(
