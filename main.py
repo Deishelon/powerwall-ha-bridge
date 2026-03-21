@@ -46,7 +46,7 @@ def get_power_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
     # {'site': -14, 'solar': 2200, 'battery': 344, 'load': 2529}
     # {'site': 83, 'solar': 2628, 'battery': -122, 'load': 2610.25}
     power = pw_api.power()
-    battery = power['battery']  # Negative=charging, Positive=discharging
+    battery_power = power['battery']  # Negative=charging, Positive=discharging
 
     return [
         HaEntity(
@@ -79,7 +79,7 @@ def get_power_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
             device_class=DeviceClass.POWER,
             state_class=StateClass.measurement,
             unit="W",
-            lookup=lambda: battery,
+            lookup=lambda: battery_power,
         ),
         HaEntity(
             component_id="battery_state",
@@ -87,7 +87,7 @@ def get_power_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
             device_class=DeviceClass.NONE,
             state_class=StateClass.NONE,
             unit="",
-            lookup=lambda: "Idle" if battery == 0 else "Charging" if battery < 0 else "Discharging",
+            lookup=lambda: "Idle" if battery_power == 0 else "Charging" if battery_power < 0 else "Discharging",
         ),
     ]
 
