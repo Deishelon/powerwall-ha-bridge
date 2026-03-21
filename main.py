@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone, timedelta
+import datetime
 from logging import Logger
 from typing import List
 
@@ -152,8 +152,8 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
         block_power_w = block_data['p_out'] * 1000
         runtime_m = battery_runtime_minutes(block_power_w, soc, nominal_energy_remaining)
 
-        now = datetime.now(timezone.utc)
-        runtime_at = (now + timedelta(minutes=runtime_m)).isoformat()
+        now = datetime.datetime.now(datetime.timezone.utc)
+        runtime_at = (now + datetime.timedelta(minutes=runtime_m)).isoformat()
 
         entities_for_block = [
             HaEntity(
