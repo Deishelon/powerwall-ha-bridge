@@ -1,14 +1,14 @@
 from enum import Enum
 
 class DeviceClass(Enum):
-    NONE = 1
-    POWER = 2
-    BATTERY = 3
+    NONE = 0
+    POWER = 1
+    BATTERY = 2
 
-def device_class_serialized(device: DeviceClass) -> str:
+def device_class_serialized(device: DeviceClass) -> str | None:
     match device:
         case DeviceClass.NONE:
-            return "None"
+            return None
         case DeviceClass.POWER:
             return "power"
         case DeviceClass.BATTERY:
@@ -16,10 +16,13 @@ def device_class_serialized(device: DeviceClass) -> str:
 
 
 class StateClass(Enum):
+    NONE = 0
     measurement = 1
 
 
-def state_class_serialized(state: StateClass) -> str:
+def state_class_serialized(state: StateClass) -> str | None:
     match state:
+        case StateClass.NONE:
+            return None
         case StateClass.measurement:
             return "measurement"

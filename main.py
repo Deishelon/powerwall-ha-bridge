@@ -85,7 +85,7 @@ def get_power_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
             component_id="battery_state",
             name="Battery State",
             device_class=DeviceClass.NONE,
-            state_class=StateClass.measurement,
+            state_class=StateClass.NONE,
             unit="",
             lookup=lambda: "Idle" if battery == 0 else "Charging" if battery < 0 else "Discharging",
         ),
@@ -113,8 +113,6 @@ def fetch_pw_data(
     entities.extend(get_power_entities(pw_api))
     entities.extend(get_strings_entities(pw_api))
 
-    # level(Scale=False)=60.41666666666667
-    # level(Scale=True)=58.33333333333334
     entities.append(
         HaEntity(
             component_id="battery_level",
@@ -122,6 +120,8 @@ def fetch_pw_data(
             device_class=DeviceClass.BATTERY,
             state_class=StateClass.measurement,
             unit="%",
+            # level(Scale=False)=60.41666666666667
+            # level(Scale=True)=58.33333333333334
             lookup=lambda: pw_api.level(scale=True),
         )
     )
@@ -165,7 +165,7 @@ def fetch_pw_data(
     for entity in entities:
         mqtt.publish(
             topic=entity.state_topic(ha_device.device_id, discovery_prefix),
-            payload=json.dumps(entity.lookup()),
+            payload=entity.lookup(),
             retain=True,
         )
 
