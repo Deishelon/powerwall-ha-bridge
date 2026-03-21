@@ -138,8 +138,9 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
 def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
     # battery_blocks={'TG1252600023PG': {'Type': '', 'PackagePartNumber': '1707000-30-L', 'disabled_reasons': [], 'pinv_state': 'AcMode_GridFollowing', 'pinv_grid_state': None, 'nominal_energy_remaining': 8680, 'nominal_full_pack_energy': 14380, 'p_out': -2.41, 'q_out': None, 'v_out': 237, 'f_out': 50.05, 'i_out': None, 'energy_charged': None, 'energy_discharged': None, 'off_grid': None, 'vf_mode': None, 'wobble_detected': None, 'charge_power_clamped': None, 'backup_ready': None, 'OpSeqState': None, 'version': None}}
     blocks = pw_api.battery_blocks()
-
     entities = list[HaEntity]()
+    if blocks is None:
+        return entities
 
     for block_id, block_data in blocks.items():
         def make_lookup(data, key):
@@ -291,17 +292,20 @@ def battery_runtime_minutes(power_w: float, soc: float, capacity_wh: float) -> i
         soc:          State of charge in % (0–100)
         capacity_wh:  Total battery capacity in watt-hours (Wh)
     """
+    if not (0 <= soc <= 100):
+        return 0
+
     remaining_wh = (soc / 100.0) * capacity_wh
 
-    # Discharging
-    if power_w > 0.1 and remaining_wh > 0.1:
-        minutes_to_empty = (remaining_wh / power_w) * 60
-        return round(minutes_to_empty)
+    # Discharging (power > 0)
+    if power_w > 100 and remaining_wh > 100:
+        minutes = (remaining_wh / power_w) * 60
+        return round(minutes)
 
-    # Charging
-    elif power_w < -0.1 and soc < 99.9:
+    # Charging (power < 0)
+    elif power_w < -100 and soc < 99.9:
         missing_wh = capacity_wh - remaining_wh
-        minutes_to_full = (missing_wh / abs(power_w)) * 60
+        minutes_to_full = missing_wh / abs(power_w) * 60
         return -round(minutes_to_full)
 
     # Idle
