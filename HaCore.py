@@ -6,6 +6,7 @@ class DeviceClass(Enum):
     BATTERY = 2
     VOLTAGE = 3
     CURRENT = 4
+    ENERGY_STORAGE = 5
 
 def device_class_serialized(device: DeviceClass) -> str | None:
     match device:
@@ -19,6 +20,8 @@ def device_class_serialized(device: DeviceClass) -> str | None:
             return "voltage"
         case DeviceClass.CURRENT:
             return "current"
+        case DeviceClass.ENERGY_STORAGE:
+            return "energy_storage"
 
 
 class StateClass(Enum):
