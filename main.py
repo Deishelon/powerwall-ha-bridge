@@ -108,7 +108,16 @@ def fetch_pw_data(pw_api: pypowerwall.Powerwall, mqtt: MqttClient, logger: Logge
             state_class=StateClass.measurement,
             unit="W",
             lookup=lambda: pw_api.power()['solar'],
-        )
+        ),
+        HaEntity(
+            component_id="battery_level",
+            name="Battery Level",
+            device_class=DeviceClass.BATTERY,
+            state_class=StateClass.measurement,
+            unit="%",
+            lookup=lambda: pw_api.level(scale=True),
+        ),
+
     ]
 
     discovery = HaDiscovery(
@@ -119,11 +128,12 @@ def fetch_pw_data(pw_api: pypowerwall.Powerwall, mqtt: MqttClient, logger: Logge
         manufacturer="Tesla",
     )
 
-    mqtt.publish(
-        topic=f"{discovery_prefix}/device/powerwall2mqtt/config",
-        payload=json.dumps(discovery.get_discovery_payload(entities, discovery_prefix)),
-        retain=True,
-    )
+    for topic, payload in discovery.get_discovery_payloads(entities, discovery_prefix).items():
+        mqtt.publish(
+            topic=topic,
+            payload=json.dumps(payload),
+            retain=True,
+        )
 
     for entity in entities:
         mqtt.publish(

@@ -3,6 +3,7 @@ from enum import Enum
 class DeviceClass(Enum):
     NONE = 1
     POWER = 2
+    BATTERY = 3
 
 def device_class_serialized(device: DeviceClass) -> str:
     match device:
@@ -10,6 +11,8 @@ def device_class_serialized(device: DeviceClass) -> str:
             return "None"
         case DeviceClass.POWER:
             return "power"
+        case DeviceClass.BATTERY:
+            return "battery"
 
 
 class StateClass(Enum):

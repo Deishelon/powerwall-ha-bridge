@@ -18,24 +18,19 @@ class HaDiscovery:
         self.model = model
         self.manufacturer = manufacturer
 
-    def get_discovery_payload(self, entities: List[HaEntity], discovery_prefix: str):
-        payload = {
-            "device": {
-                "identifiers": [self.device_id],
-                "name": self.device_name,
-                "manufacturer": self.manufacturer,
-                "model": self.model,
-                "sw_version": self.firmware,
-                "serial_number": self.device_id
-            },
-            "origin": {
-                "name": "pypowerwall",
-                "sw_version": "1.0",
-                "support_url": "https://github.com/jasonacox/pypowerwall"
-            },
-            "qos": 1,
-            "component": {
-                entity.component_id: entity.get_discovery_config(self.device_id, discovery_prefix) for entity in entities
-            }
+    def get_device_info(self):
+        return {
+            "identifiers": [self.device_id],
+            "name": self.device_name,
+            "manufacturer": self.manufacturer,
+            "model": self.model,
+            "sw_version": self.firmware,
         }
-        return payload
+
+    def get_discovery_payloads(self, entities: List[HaEntity.HaEntity], discovery_prefix: str):
+        device_info = self.get_device_info()
+        payloads = {}
+        for entity in entities:
+            topic = f"{discovery_prefix}/sensor/{self.device_id}/{entity.component_id}/config"
+            payloads[topic] = entity.get_discovery_config(self.device_id, discovery_prefix, device_info)
+        return payloads

@@ -21,9 +21,8 @@ class HaEntity:
     def state_topic(self, device_id: str, discovery_prefix: str):
         return f"{discovery_prefix}/sensor/{device_id}/{self.component_id}/state"
 
-    def get_discovery_config(self, device_id: str, discovery_prefix: str):
+    def get_discovery_config(self, device_id: str, discovery_prefix: str, device_info: dict = None):
         config = {
-            "platform": "sensor",
             "name": self.name,
             "unique_id": f"{device_id}_{self.component_id}",
             "state_topic": self.state_topic(device_id, discovery_prefix),
@@ -34,6 +33,7 @@ class HaEntity:
             config["state_class"] = state_class_serialized(self.state_class)
         if self.unit:
             config["unit_of_measurement"] = self.unit
-
+        if device_info:
+            config["device"] = device_info
 
         return config
