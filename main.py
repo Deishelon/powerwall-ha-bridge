@@ -18,7 +18,7 @@ def get_pw_api():
     gw_pwd = os.getenv('POWERWALL_GW_PWD', "")
     password = os.getenv('POWERWALL_PASSWORD', "")
     email = os.getenv('POWERWALL_EMAIL', "")
-    timezone = os.getenv('POWERWALL_TIMEZONE', "Pacific/Auckland")
+    timezone = os.getenv('POWERWALL_TIMEZONE', os.getenv('TZ', "Pacific/Auckland"))
 
     return pypowerwall.Powerwall(host, password, email, timezone, gw_pwd=gw_pwd, auto_select=True)
 
