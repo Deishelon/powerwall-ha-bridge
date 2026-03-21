@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone, timedelta
 from logging import Logger
 from typing import List
 
@@ -154,6 +155,9 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
         block_power_w = block_data['p_out'] * 1000
         runtime_m = battery_runtime_minutes(block_power_w, soc, nominal_energy_remaining)
 
+        now = datetime.now(timezone.utc)
+        runtime_at = (now + timedelta(minutes=runtime_m)).isoformat()
+
         entities_for_block = [
             HaEntity(
                 component_id=f"battery_{block_id}_nominal_energy_remaining",
@@ -178,6 +182,14 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
                 state_class=StateClass.measurement,
                 unit="min",
                 lookup=lambda: runtime_m,
+            ),
+            HaEntity(
+                component_id=f"battery_{block_id}_runtime_date",
+                name=f"Battery Runtime Date - {block_id}",
+                device_class=DeviceClass.TIMESTAMP,
+                state_class=StateClass.measurement,
+                unit="",
+                lookup=lambda: runtime_at if runtime_m > 0 else None,
             ),
         ]
         entities.extend(entities_for_block)

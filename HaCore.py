@@ -9,6 +9,7 @@ class DeviceClass(Enum):
     CURRENT = 4
     ENERGY_STORAGE = 5
     DURATION = 6
+    TIMESTAMP = 7
 
 def device_class_serialized(device: DeviceClass) -> str | None:
     match device:
@@ -26,6 +27,8 @@ def device_class_serialized(device: DeviceClass) -> str | None:
             return "energy_storage"
         case DeviceClass.DURATION:
             return "duration"
+        case DeviceClass.TIMESTAMP:
+            return "timestamp"
 
 
 class StateClass(Enum):
