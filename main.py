@@ -191,6 +191,14 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
                 unit="",
                 lookup=lambda: runtime_at if runtime_m > 0 else None,
             ),
+            HaEntity(
+                component_id=f"battery_{block_id}_level",
+                name=f"Battery Level - {block_id}",
+                device_class=DeviceClass.BATTERY,
+                state_class=StateClass.measurement,
+                unit="%",
+                lookup=lambda: soc,
+            ),
         ]
         entities.extend(entities_for_block)
         pass
