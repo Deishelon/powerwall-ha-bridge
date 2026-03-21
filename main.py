@@ -91,17 +91,46 @@ def get_power_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
         ),
     ]
 
+
 def get_strings_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
     # strings(verbose=False)={'A': {'State': 'Pv_Active', 'Voltage': 414, 'Current': 2.05, 'Power': 848.6999999999999, 'Connected': True}, 'B': {'State': 'Pv_Active_Parallel', 'Voltage': 414, 'Current': 1.9499999999999997, 'Power': 807.2999999999998, 'Connected': True}, 'C': {'State': 'Pv_Active', 'Voltage': 278, 'Current': 2.0999999999999996, 'Power': 583.8, 'Connected': True}, 'D': {'State': 'Pv_Active_Parallel', 'Voltage': 278, 'Current': 1.9999999999999998, 'Power': 555.9999999999999, 'Connected': True}, 'E': {'State': 'Pv_Active', 'Voltage': 0, 'Current': 0, 'Power': 0, 'Connected': True}, 'F': {'State': 'Pv_Active_Parallel', 'Voltage': 0, 'Current': 0, 'Power': 0, 'Connected': True}}
     # strings(verbose=True)={'PVAC--1707000-30-L--TG1252600023PG': {'PVAC_Pout': -2350, 'PVAC_PvState_A': 'Pv_Active', 'PVAC_PVMeasuredVoltage_A': 414, 'PVAC_PVCurrent_A': 2.05, 'PVAC_PVMeasuredPower_A': 848.6999999999999, 'PVAC_PvState_B': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_B': 414, 'PVAC_PVCurrent_B': 1.9499999999999997, 'PVAC_PVMeasuredPower_B': 807.2999999999998, 'PVAC_PvState_C': 'Pv_Active', 'PVAC_PVMeasuredVoltage_C': 278, 'PVAC_PVCurrent_C': 2.0999999999999996, 'PVAC_PVMeasuredPower_C': 583.8, 'PVAC_PvState_D': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_D': 278, 'PVAC_PVCurrent_D': 1.9999999999999998, 'PVAC_PVMeasuredPower_D': 555.9999999999999, 'PVAC_PvState_E': 'Pv_Active', 'PVAC_PVMeasuredVoltage_E': 0, 'PVAC_PVCurrent_E': 0, 'PVAC_PVMeasuredPower_E': 0, 'PVAC_PvState_F': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_F': 0, 'PVAC_PVCurrent_F': 0, 'PVAC_PVMeasuredPower_F': 0, 'PVS_StringA_Connected': True, 'PVS_StringB_Connected': True, 'PVS_StringC_Connected': True, 'PVS_StringD_Connected': True, 'PVS_StringE_Connected': True, 'PVS_StringF_Connected': True}}
-    strings=pw_api.strings()
+    strings = pw_api.strings()
 
+    entities = list[HaEntity]()
 
+    for pv_id, pv_data in strings.items():
+        entities_for_string = [
+            HaEntity(
+                component_id=f"array{pv_id}_voltage",
+                name=f"Array {pv_id} Voltage",
+                device_class=DeviceClass.VOLTAGE,
+                state_class=StateClass.measurement,
+                unit="V",
+                lookup=lambda: pv_data['Voltage'],
+            ),
+            HaEntity(
+                component_id=f"array{pv_id}_current",
+                name=f"Array {pv_id} Current",
+                device_class=DeviceClass.CURRENT,
+                state_class=StateClass.measurement,
+                unit="A",
+                lookup=lambda: pv_data['Current'],
+            ),
+            HaEntity(
+                component_id=f"array{pv_id}_power",
+                name=f"Array {pv_id} Power",
+                device_class=DeviceClass.POWER,
+                state_class=StateClass.measurement,
+                unit="W",
+                lookup=lambda: pv_data['Power'],
+            )
+        ]
+        entities.extend(entities_for_string)
+        pass
 
+    return entities
 
-    return [
-
-    ]
 
 def fetch_pw_data(
         pw_api: pypowerwall.Powerwall,
@@ -126,9 +155,6 @@ def fetch_pw_data(
         )
     )
 
-
-
-
     #######
     ha_device = HaDevice(
         device_id=f"test-{pw_api.status()['din']}",
@@ -138,8 +164,6 @@ def fetch_pw_data(
         manufacturer="Tesla",
     )
     publish_ha_device(ha_device, entities, discovery_prefix, mqtt)
-
-
 
     # INFO:powerwall2mqtt:system_status={'command_source': 'Configuration', 'battery_target_power': 0, 'battery_target_reactive_power': 0, 'nominal_full_pack_energy': 14400, 'nominal_energy_remaining': 8600, 'max_power_energy_remaining': 0, 'max_power_energy_to_be_charged': 0, 'max_charge_power': None, 'max_discharge_power': None, 'max_apparent_power': None, 'instantaneous_max_discharge_power': 0, 'instantaneous_max_charge_power': 0, 'instantaneous_max_apparent_power': 0, 'hardware_capability_charge_power': 0, 'hardware_capability_discharge_power': 0, 'grid_services_power': None, 'system_island_state': 'SystemGridConnected', 'available_blocks': 0, 'available_charger_blocks': 0, 'battery_blocks': [{'Type': '', 'PackagePartNumber': '1707000-30-L', 'PackageSerialNumber': 'TG1252600023PG', 'disabled_reasons': [], 'pinv_state': 'AcMode_GridFollowing', 'pinv_grid_state': None, 'nominal_energy_remaining': 8590, 'nominal_full_pack_energy': 14380, 'p_out': -1.77, 'q_out': None, 'v_out': 238, 'f_out': 49.92, 'i_out': None, 'energy_charged': None, 'energy_discharged': None, 'off_grid': None, 'vf_mode': None, 'wobble_detected': None, 'charge_power_clamped': None, 'backup_ready': None, 'OpSeqState': None, 'version': None}], 'ffr_power_availability_high': 0, 'ffr_power_availability_low': 0, 'load_charge_constraint': 0, 'max_sustained_ramp_rate': 0, 'grid_faults': [], 'can_reboot': 'Yes', 'smart_inv_delta_p': 0, 'smart_inv_delta_q': 0, 'last_toggle_timestamp': '2023-10-13T04:08:05.957195-07:00', 'solar_real_power_limit': None, 'score': 10000, 'blocks_controlled': 0, 'primary': True, 'auxiliary_load': 0, 'all_enable_lines_high': True, 'inverter_nominal_usable_power': 0, 'expected_energy_remaining': 0}
     logger.info(f"system_status={pw_api.system_status()}")
