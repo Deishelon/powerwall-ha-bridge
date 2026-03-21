@@ -145,6 +145,14 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
         def make_lookup(data, key):
             return lambda: data[key]
 
+        nominal_energy_remaining = block_data['nominal_energy_remaining']
+        nominal_full_pack_energy = block_data['nominal_full_pack_energy']
+        soc = nominal_energy_remaining / nominal_full_pack_energy * 100
+
+        # Negative=charging, Positive=discharging
+        block_power_w = block_data['p_out'] * 1000
+        runtime_m = battery_runtime_minutes(block_power_w, soc, nominal_energy_remaining)
+
         entities_for_block = [
             HaEntity(
                 component_id=f"battery_{block_id}_nominal_energy_remaining",
@@ -152,7 +160,7 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
                 device_class=DeviceClass.ENERGY_STORAGE,
                 state_class=StateClass.measurement,
                 unit="Wh",
-                lookup=make_lookup(block_data, 'nominal_energy_remaining'),
+                lookup=lambda: nominal_energy_remaining,
             ),
             HaEntity(
                 component_id=f"battery_{block_id}_nominal_full_pack_energy",
@@ -160,7 +168,15 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
                 device_class=DeviceClass.ENERGY_STORAGE,
                 state_class=StateClass.measurement,
                 unit="Wh",
-                lookup=make_lookup(block_data, 'nominal_full_pack_energy'),
+                lookup=lambda: nominal_full_pack_energy,
+            ),
+            HaEntity(
+                component_id=f"battery_{block_id}_runtime_minutes",
+                name=f"Battery Runtime - {block_id}",
+                device_class=DeviceClass.DURATION,
+                state_class=StateClass.measurement,
+                unit="min",
+                lookup=lambda: runtime_m,
             ),
         ]
         entities.extend(entities_for_block)
@@ -259,6 +275,38 @@ def main():
         logger.info("Stopping...")
     finally:
         mqtt.disconnect()
+
+
+def battery_runtime_minutes(power_w: float, soc: float, capacity_wh: float) -> int:
+    """
+    Returns estimated minutes until:
+      + positive = minutes until empty (when discharging)
+      - negative = minutes until full (when charging)
+      0 = idle / negligible power
+    
+    Args:
+        power_w: Current power in watts (W)
+                      > 0  → discharging
+                      < 0  → charging
+        soc:          State of charge in % (0–100)
+        capacity_wh:  Total battery capacity in watt-hours (Wh)
+    """
+    remaining_wh = (soc / 100.0) * capacity_wh
+
+    # Discharging
+    if power_w > 0.1 and remaining_wh > 0.1:
+        minutes_to_empty = (remaining_wh / power_w) * 60
+        return round(minutes_to_empty)
+
+    # Charging
+    elif power_w < -0.1 and soc < 99.9:
+        missing_wh = capacity_wh - remaining_wh
+        minutes_to_full = (missing_wh / abs(power_w)) * 60
+        return -round(minutes_to_full)
+
+    # Idle
+    else:
+        return 0
 
 
 if __name__ == '__main__':

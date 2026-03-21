@@ -1,5 +1,6 @@
 from enum import Enum
 
+# https://www.home-assistant.io/integrations/sensor/#device-class
 class DeviceClass(Enum):
     NONE = 0
     POWER = 1
@@ -7,6 +8,7 @@ class DeviceClass(Enum):
     VOLTAGE = 3
     CURRENT = 4
     ENERGY_STORAGE = 5
+    DURATION = 6
 
 def device_class_serialized(device: DeviceClass) -> str | None:
     match device:
@@ -22,6 +24,8 @@ def device_class_serialized(device: DeviceClass) -> str | None:
             return "current"
         case DeviceClass.ENERGY_STORAGE:
             return "energy_storage"
+        case DeviceClass.DURATION:
+            return "duration"
 
 
 class StateClass(Enum):
