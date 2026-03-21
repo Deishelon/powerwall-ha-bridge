@@ -145,7 +145,7 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
         def make_lookup(data, key):
             return lambda: data[key]
 
-        entities_for_string = [
+        entities_for_block = [
             HaEntity(
                 component_id=f"battery_{block_id}_nominal_energy_remaining",
                 name=f"Battery Nominal Energy Remaining - {block_id}",
@@ -163,7 +163,7 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
                 lookup=make_lookup(block_data, 'nominal_full_pack_energy'),
             ),
         ]
-        entities.extend(entities_for_string)
+        entities.extend(entities_for_block)
         pass
 
     return entities
