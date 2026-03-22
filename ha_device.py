@@ -1,6 +1,6 @@
 from typing import List
 
-import ha_entity
+from ha_entity import HaEntity
 
 
 class HaDevice:
@@ -8,24 +8,21 @@ class HaDevice:
             self,
             device_id: str,
             device_name: str,
-            firmware: str,
             model: str,
             manufacturer: str,
     ):
         self.device_id = device_id
         self.device_name = device_name
-        self.firmware = firmware
         self.model = model
         self.manufacturer = manufacturer
 
-    def get_discovery(self, entities: List[HaEntity.HaEntity], discovery_prefix: str):
+    def get_discovery(self, entities: List[HaEntity], discovery_prefix: str):
         payload = {
             "device": {
                 "identifiers": [self.device_id],
                 "name": self.device_name,
                 "manufacturer": self.manufacturer,
                 "model": self.model,
-                "sw_version": self.firmware,
             },
             "origin": {
                 "name": "powerwall2mqtt",

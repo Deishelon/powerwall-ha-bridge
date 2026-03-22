@@ -206,6 +206,7 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
 
 
 def fetch_pw_data(
+        ha_device: HaDevice,
         pw_api: pypowerwall.Powerwall,
         mqtt: MqttClient,
         logger: Logger,
@@ -230,16 +231,6 @@ def fetch_pw_data(
         )
     )
 
-    # INFO:powerwall2mqtt:status={'din': '1707000-30-L--TG1252600023PG', 'start_time': '2026-03-16T17:03:05+13:00', 'up_time_seconds': None, 'is_new': False, 'version': '26.2.1 a7456b0a', 'git_hash': None, 'commission_count': 0, 'device_type': None, 'teg_type': 'unknown', 'sync_type': 'unknown', 'cellular_disabled': False, 'can_reboot': True}
-    status = pw_api.status()
-
-    ha_device = HaDevice(
-        device_id=f"test-{status['din']}",
-        device_name=f"test-{pw_api.site_name()}",
-        firmware=pw_api.version(),  # version=26.2.1 a7456b0a
-        model="Powerwall",
-        manufacturer="Tesla",
-    )
     publish_ha_device(ha_device, entities, discovery_prefix, mqtt)
 
     for entity in entities:
@@ -282,10 +273,25 @@ def main():
         logger.error(f"Failed to connect to MQTT broker: {e}")
         exit(1)
 
+    # INFO:powerwall2mqtt:status={'din': '1707000-30-L--TG1252600023PG', 'start_time': '2026-03-16T17:03:05+13:00', 'up_time_seconds': None, 'is_new': False, 'version': '26.2.1 a7456b0a', 'git_hash': None, 'commission_count': 0, 'device_type': None, 'teg_type': 'unknown', 'sync_type': 'unknown', 'cellular_disabled': False, 'can_reboot': True}
+    status = pw_api.status()
+
+    if status is None:
+        logger.error("Failed to get status from Powerwall")
+        exit(1)
+
+    ha_device = HaDevice(
+        device_id=f"test-{status['din']}",
+        device_name=f"test-{pw_api.site_name()}",
+        model="Powerwall",
+        manufacturer="Tesla",
+    )
+
     try:
         while True:
             logger.info("Polling...")
             fetch_pw_data(
+                ha_device=ha_device,
                 pw_api=pw_api,
                 mqtt=mqtt,
                 logger=logger,
