@@ -7,9 +7,9 @@ import pypowerwall
 import os
 import logging
 
-from HaCore import DeviceClass, StateClass
-from HaDevice import HaDevice
-from HaEntity import HaEntity
+from ha_core import DeviceClass, StateClass
+from ha_device import HaDevice
+from ha_entity import HaEntity
 from mqtt_paho import MqttClient
 import time
 

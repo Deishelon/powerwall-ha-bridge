@@ -1,4 +1,4 @@
-from HaCore import DeviceClass, StateClass, device_class_serialized, state_class_serialized
+from ha_core import DeviceClass, StateClass, device_class_serialized, state_class_serialized
 from typing import Callable
 
 

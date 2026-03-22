@@ -1,6 +1,6 @@
 from typing import List
 
-import HaEntity
+import ha_entity
 
 
 class HaDevice:
