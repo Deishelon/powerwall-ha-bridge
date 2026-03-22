@@ -266,20 +266,23 @@ async def main():
     )
 
     async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall], list[HaEntity]]):
-        while True:
-            entities = entities_lookup_fn(pw_api)
-            for entity in entities:
-                ha_device.register_entity(entity)
-                try:
-                    mqtt.publish(
-                        topic=entity.state_topic(ha_device.device_id, discovery_prefix),
-                        payload=entity.lookup(),
-                        retain=True,
-                    )
-                except Exception as err:
-                    logger.error(f"Failed to lookup entity {entity.component_id}: {err}")
-                    continue
-            await asyncio.sleep(duration_sec)
+        try:
+            while True:
+                entities = entities_lookup_fn(pw_api)
+                for entity in entities:
+                    ha_device.register_entity(entity)
+                    try:
+                        mqtt.publish(
+                            topic=entity.state_topic(ha_device.device_id, discovery_prefix),
+                            payload=entity.lookup(),
+                            retain=True,
+                        )
+                    except Exception as err:
+                        logger.error(f"Failed to lookup entity {entity.component_id}: {err}")
+                        continue
+        except Exception as err:
+            logger.error(f"Error while fetching entities: {err}")
+        await asyncio.sleep(duration_sec)
 
     async def update_device_info():
         while True:
