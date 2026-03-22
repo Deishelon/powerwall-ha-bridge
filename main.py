@@ -1,7 +1,8 @@
+import asyncio
 import json
 import datetime
 from logging import Logger
-from typing import List
+from typing import Callable
 
 import pypowerwall
 import os
@@ -12,9 +13,22 @@ from ha_device import HaDevice
 from ha_entity import HaEntity
 from math_utils import battery_runtime_minutes
 from mqtt_paho import MqttClient
-import time
 
 
+# INFO:powerwall2mqtt:system_status={'command_source': 'Configuration', 'battery_target_power': 0, 'battery_target_reactive_power': 0, 'nominal_full_pack_energy': 14400, 'nominal_energy_remaining': 8600, 'max_power_energy_remaining': 0, 'max_power_energy_to_be_charged': 0, 'max_charge_power': None, 'max_discharge_power': None, 'max_apparent_power': None, 'instantaneous_max_discharge_power': 0, 'instantaneous_max_charge_power': 0, 'instantaneous_max_apparent_power': 0, 'hardware_capability_charge_power': 0, 'hardware_capability_discharge_power': 0, 'grid_services_power': None, 'system_island_state': 'SystemGridConnected', 'available_blocks': 0, 'available_charger_blocks': 0, 'battery_blocks': [{'Type': '', 'PackagePartNumber': '1707000-30-L', 'PackageSerialNumber': 'TG1252600023PG', 'disabled_reasons': [], 'pinv_state': 'AcMode_GridFollowing', 'pinv_grid_state': None, 'nominal_energy_remaining': 8590, 'nominal_full_pack_energy': 14380, 'p_out': -1.77, 'q_out': None, 'v_out': 238, 'f_out': 49.92, 'i_out': None, 'energy_charged': None, 'energy_discharged': None, 'off_grid': None, 'vf_mode': None, 'wobble_detected': None, 'charge_power_clamped': None, 'backup_ready': None, 'OpSeqState': None, 'version': None}], 'ffr_power_availability_high': 0, 'ffr_power_availability_low': 0, 'load_charge_constraint': 0, 'max_sustained_ramp_rate': 0, 'grid_faults': [], 'can_reboot': 'Yes', 'smart_inv_delta_p': 0, 'smart_inv_delta_q': 0, 'last_toggle_timestamp': '2023-10-13T04:08:05.957195-07:00', 'solar_real_power_limit': None, 'score': 10000, 'blocks_controlled': 0, 'primary': True, 'auxiliary_load': 0, 'all_enable_lines_high': True, 'inverter_nominal_usable_power': 0, 'expected_energy_remaining': 0}
+# logger.info(f"system_status={pw_api.system_status()}")
+
+# INFO:powerwall2mqtt:vitals={'VITALS': {'text': 'Device vitals generated from Tesla Powerwall Gateway TEDAPI', 'timestamp': 1774040502.68937, 'gateway': '192.168.91.1', 'pyPowerwall': '0.14.10'}, 'STSTSM--1707000-30-L--TG1252600023PG': {'STSTSM-Location': 'Gateway', 'alerts': ['SystemConnectedToGrid', 'FWUpdateSucceeded'], 'firmwareVersion': None, 'lastCommunicationTime': None, 'manufacturer': 'TESLA', 'partNumber': '1707000-30-L', 'serialNumber': 'TG1252600023PG', 'teslaEnergyEcuAttributes': {'ecuType': 207}}, 'TESLA--None': {'componentParentDin': 'STSTSM--1707000-30-L--TG1252600023PG', 'lastCommunicationTime': None, 'manufacturer': 'TESLA', 'meterAttributes': {'meterLocation': [1]}, 'serialNumber': None}, 'TESYNC--1493315-02-H--JBL25163Y2H0EY': {'ISLAND_FreqL1_Load': 50.04, 'ISLAND_FreqL1_Main': 50.04, 'ISLAND_FreqL2_Load': 50.04, 'ISLAND_FreqL2_Main': 50.04, 'ISLAND_FreqL3_Load': 50.04, 'ISLAND_FreqL3_Main': 49.97, 'ISLAND_GridConnected': 'ISLAND_GridConnected_Connected', 'ISLAND_GridState': 'ISLAND_GridState_Grid_Compliant', 'ISLAND_L1L2PhaseDelta': None, 'ISLAND_L1L3PhaseDelta': None, 'ISLAND_L1MicrogridOk': None, 'ISLAND_L2L3PhaseDelta': None, 'ISLAND_L2MicrogridOk': None, 'ISLAND_L3MicrogridOk': None, 'ISLAND_PhaseL1_Main_Load': None, 'ISLAND_PhaseL2_Main_Load': None, 'ISLAND_PhaseL3_Main_Load': None, 'ISLAND_ReadyForSynchronization': None, 'ISLAND_VL1N_Load': 238, 'ISLAND_VL1N_Main': 239.5, 'ISLAND_VL2N_Load': 8, 'ISLAND_VL2N_Main': 8, 'ISLAND_VL3N_Load': 1.5, 'ISLAND_VL3N_Main': 0.5, 'METER_X_CTA_I': 6.6635, 'METER_X_CTA_InstReactivePower': 1322, 'METER_X_CTA_InstRealPower': 6, 'METER_X_CTB_I': 0, 'METER_X_CTB_InstReactivePower': 0, 'METER_X_CTB_InstRealPower': 0, 'METER_X_CTC_I': 0, 'METER_X_CTC_InstReactivePower': 0, 'METER_X_CTC_InstRealPower': 0, 'METER_X_LifetimeEnergyExport': None, 'METER_X_LifetimeEnergyImport': None, 'METER_X_VL1N': 237.26, 'METER_X_VL2N': 8.040000000000001, 'METER_X_VL3N': 0.45, 'METER_Y_CTA_I': 0, 'METER_Y_CTA_InstReactivePower': 0, 'METER_Y_CTA_InstRealPower': 0, 'METER_Y_CTB_I': 0, 'METER_Y_CTB_InstReactivePower': 0, 'METER_Y_CTB_InstRealPower': 0, 'METER_Y_CTC_I': 0, 'METER_Y_CTC_InstReactivePower': 0, 'METER_Y_CTC_InstRealPower': 0, 'METER_Y_LifetimeEnergyExport': None, 'METER_Y_LifetimeEnergyImport': None, 'METER_Y_VL1N': 236.1, 'METER_Y_VL2N': 8, 'METER_Y_VL3N': 1.51, 'SYNC_ExternallyPowered': None, 'SYNC_SiteSwitchEnabled': None, 'alerts': [], 'componentParentDin': 'STSTSM--1707000-30-L--TG1252600023PG', 'firmwareVersion': None, 'manufacturer': 'TESLA', 'partNumber': '1493315-02-H', 'serialNumber': 'JBL25163Y2H0EY', 'teslaEnergyEcuAttributes': {'ecuType': 259}}, 'TEPOD--1707000-30-L--TG1252600023PG': {'alerts': [], 'POD_nom_energy_remaining': 8680, 'POD_nom_energy_to_be_charged': 5700, 'POD_nom_full_pack_energy': 14380}, 'PVAC--1707000-30-L--TG1252600023PG': {'PVAC_Fout': 50.05, 'PVAC_Vout': 237.20000000000002, 'PVAC_VL1Ground': 118.60000000000001, 'PVAC_VL2Ground': 118.60000000000001, 'PVAC_Pout': -2460, 'PVAC_State': 'AcMode_GridFollowing', 'PVAC_PvState_A': 'Pv_Active', 'PVAC_PVMeasuredVoltage_A': 416, 'PVAC_PVCurrent_A': 2.0999999999999996, 'PVAC_PVMeasuredPower_A': 873.5999999999999, 'manufacturer': 'TESLA', 'partNumber': '1707000-30-L', 'serialNumber': 'TG1252600023PG', 'PVAC_PvState_B': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_B': 416, 'PVAC_PVCurrent_B': 1.9999999999999998, 'PVAC_PVMeasuredPower_B': 831.9999999999999, 'PVAC_PvState_C': 'Pv_Active', 'PVAC_PVMeasuredVoltage_C': 280, 'PVAC_PVCurrent_C': 2.0999999999999996, 'PVAC_PVMeasuredPower_C': 587.9999999999999, 'PVAC_PvState_D': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_D': 280, 'PVAC_PVCurrent_D': 1.9999999999999998, 'PVAC_PVMeasuredPower_D': 559.9999999999999, 'PVAC_PvState_E': 'Pv_Active', 'PVAC_PVMeasuredVoltage_E': 0, 'PVAC_PVCurrent_E': 0, 'PVAC_PVMeasuredPower_E': 0, 'PVAC_PvState_F': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_F': 0, 'PVAC_PVCurrent_F': 0, 'PVAC_PVMeasuredPower_F': 0}, 'PVS--1707000-30-L--TG1252600023PG': {'PVS_StringA_Connected': True, 'PVS_StringB_Connected': True, 'PVS_StringC_Connected': True, 'PVS_StringD_Connected': True, 'PVS_StringE_Connected': True, 'PVS_StringF_Connected': True}, 'TEPINV--1707000-30-L--TG1252600023PG': {'PINV_Fout': 50.05, 'PINV_Vout': 237.20000000000002, 'PINV_VSplit1': 118.60000000000001, 'PINV_VSplit2': 118.60000000000001, 'PINV_Pout': -2.46, 'PINV_State': 'AcMode_GridFollowing'}}
+# logger.info(f"vitals={pw_api.vitals()}")
+
+# INFO:powerwall2mqtt:alerts=['SystemConnectedToGrid', 'FWUpdateSucceeded']
+# logger.info(f"alerts={pw_api.alerts()}")
+
+# INFO:powerwall2mqtt:site_name=My Home
+# logger.info(f"site_name={pw_api.site_name()}")
+
+# INFO:powerwall2mqtt:status={'din': '1707000-30-L--TG1252600023PG', 'start_time': '2026-03-16T17:03:05+13:00', 'up_time_seconds': None, 'is_new': False, 'version': '26.2.1 a7456b0a', 'git_hash': None, 'commission_count': 0, 'device_type': None, 'teg_type': 'unknown', 'sync_type': 'unknown', 'cellular_disabled': False, 'can_reboot': True}
+# logger.info(f"status={pw_api.status()}")
 def get_pw_api():
     host = os.getenv('POWERWALL_HOST', "192.168.91.1")
     gw_pwd = os.getenv('POWERWALL_GW_PWD', "")
@@ -35,8 +49,8 @@ def get_mqtt_client():
     return MqttClient(broker, port, client_id, username, password)
 
 
-def publish_ha_device(ha_device: HaDevice, entities: List[HaEntity.HaEntity], discovery_prefix: str, mqtt: MqttClient):
-    topic, payload = ha_device.get_discovery(entities, discovery_prefix)
+def publish_ha_device(ha_device: HaDevice, discovery_prefix: str, mqtt: MqttClient):
+    topic, payload = ha_device.get_discovery(ha_device.entities, discovery_prefix)
     mqtt.publish(
         topic=topic,
         payload=json.dumps(payload),
@@ -187,7 +201,7 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
                 device_class=DeviceClass.TIMESTAMP,
                 state_class=StateClass.measurement,
                 unit="",
-                lookup=lambda: runtime_at if runtime_m > 0 else None,
+                lookup=lambda: runtime_at if runtime_m != 0 else None,
             ),
             HaEntity(
                 component_id=f"battery_{block_id}_level",
@@ -205,19 +219,8 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
     return entities
 
 
-def fetch_pw_data(
-        ha_device: HaDevice,
-        pw_api: pypowerwall.Powerwall,
-        mqtt: MqttClient,
-        logger: Logger,
-        discovery_prefix: str
-):
-    entities = list[HaEntity]()
-    entities.extend(get_power_entities(pw_api))
-    entities.extend(get_strings_entities(pw_api))
-    entities.extend(get_battery_blocks_entities(pw_api))
-
-    entities.append(
+def get_battery_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
+    return [
         HaEntity(
             component_id="battery_level",
             name="Battery Level",
@@ -229,37 +232,11 @@ def fetch_pw_data(
             lookup=lambda: pw_api.level(scale=True),
             suggested_display_precision=1,
         )
-    )
-
-    publish_ha_device(ha_device, entities, discovery_prefix, mqtt)
-
-    for entity in entities:
-        mqtt.publish(
-            topic=entity.state_topic(ha_device.device_id, discovery_prefix),
-            payload=entity.lookup(),
-            retain=True,
-        )
-
-    # INFO:powerwall2mqtt:system_status={'command_source': 'Configuration', 'battery_target_power': 0, 'battery_target_reactive_power': 0, 'nominal_full_pack_energy': 14400, 'nominal_energy_remaining': 8600, 'max_power_energy_remaining': 0, 'max_power_energy_to_be_charged': 0, 'max_charge_power': None, 'max_discharge_power': None, 'max_apparent_power': None, 'instantaneous_max_discharge_power': 0, 'instantaneous_max_charge_power': 0, 'instantaneous_max_apparent_power': 0, 'hardware_capability_charge_power': 0, 'hardware_capability_discharge_power': 0, 'grid_services_power': None, 'system_island_state': 'SystemGridConnected', 'available_blocks': 0, 'available_charger_blocks': 0, 'battery_blocks': [{'Type': '', 'PackagePartNumber': '1707000-30-L', 'PackageSerialNumber': 'TG1252600023PG', 'disabled_reasons': [], 'pinv_state': 'AcMode_GridFollowing', 'pinv_grid_state': None, 'nominal_energy_remaining': 8590, 'nominal_full_pack_energy': 14380, 'p_out': -1.77, 'q_out': None, 'v_out': 238, 'f_out': 49.92, 'i_out': None, 'energy_charged': None, 'energy_discharged': None, 'off_grid': None, 'vf_mode': None, 'wobble_detected': None, 'charge_power_clamped': None, 'backup_ready': None, 'OpSeqState': None, 'version': None}], 'ffr_power_availability_high': 0, 'ffr_power_availability_low': 0, 'load_charge_constraint': 0, 'max_sustained_ramp_rate': 0, 'grid_faults': [], 'can_reboot': 'Yes', 'smart_inv_delta_p': 0, 'smart_inv_delta_q': 0, 'last_toggle_timestamp': '2023-10-13T04:08:05.957195-07:00', 'solar_real_power_limit': None, 'score': 10000, 'blocks_controlled': 0, 'primary': True, 'auxiliary_load': 0, 'all_enable_lines_high': True, 'inverter_nominal_usable_power': 0, 'expected_energy_remaining': 0}
-    # logger.info(f"system_status={pw_api.system_status()}")
-
-    # INFO:powerwall2mqtt:vitals={'VITALS': {'text': 'Device vitals generated from Tesla Powerwall Gateway TEDAPI', 'timestamp': 1774040502.68937, 'gateway': '192.168.91.1', 'pyPowerwall': '0.14.10'}, 'STSTSM--1707000-30-L--TG1252600023PG': {'STSTSM-Location': 'Gateway', 'alerts': ['SystemConnectedToGrid', 'FWUpdateSucceeded'], 'firmwareVersion': None, 'lastCommunicationTime': None, 'manufacturer': 'TESLA', 'partNumber': '1707000-30-L', 'serialNumber': 'TG1252600023PG', 'teslaEnergyEcuAttributes': {'ecuType': 207}}, 'TESLA--None': {'componentParentDin': 'STSTSM--1707000-30-L--TG1252600023PG', 'lastCommunicationTime': None, 'manufacturer': 'TESLA', 'meterAttributes': {'meterLocation': [1]}, 'serialNumber': None}, 'TESYNC--1493315-02-H--JBL25163Y2H0EY': {'ISLAND_FreqL1_Load': 50.04, 'ISLAND_FreqL1_Main': 50.04, 'ISLAND_FreqL2_Load': 50.04, 'ISLAND_FreqL2_Main': 50.04, 'ISLAND_FreqL3_Load': 50.04, 'ISLAND_FreqL3_Main': 49.97, 'ISLAND_GridConnected': 'ISLAND_GridConnected_Connected', 'ISLAND_GridState': 'ISLAND_GridState_Grid_Compliant', 'ISLAND_L1L2PhaseDelta': None, 'ISLAND_L1L3PhaseDelta': None, 'ISLAND_L1MicrogridOk': None, 'ISLAND_L2L3PhaseDelta': None, 'ISLAND_L2MicrogridOk': None, 'ISLAND_L3MicrogridOk': None, 'ISLAND_PhaseL1_Main_Load': None, 'ISLAND_PhaseL2_Main_Load': None, 'ISLAND_PhaseL3_Main_Load': None, 'ISLAND_ReadyForSynchronization': None, 'ISLAND_VL1N_Load': 238, 'ISLAND_VL1N_Main': 239.5, 'ISLAND_VL2N_Load': 8, 'ISLAND_VL2N_Main': 8, 'ISLAND_VL3N_Load': 1.5, 'ISLAND_VL3N_Main': 0.5, 'METER_X_CTA_I': 6.6635, 'METER_X_CTA_InstReactivePower': 1322, 'METER_X_CTA_InstRealPower': 6, 'METER_X_CTB_I': 0, 'METER_X_CTB_InstReactivePower': 0, 'METER_X_CTB_InstRealPower': 0, 'METER_X_CTC_I': 0, 'METER_X_CTC_InstReactivePower': 0, 'METER_X_CTC_InstRealPower': 0, 'METER_X_LifetimeEnergyExport': None, 'METER_X_LifetimeEnergyImport': None, 'METER_X_VL1N': 237.26, 'METER_X_VL2N': 8.040000000000001, 'METER_X_VL3N': 0.45, 'METER_Y_CTA_I': 0, 'METER_Y_CTA_InstReactivePower': 0, 'METER_Y_CTA_InstRealPower': 0, 'METER_Y_CTB_I': 0, 'METER_Y_CTB_InstReactivePower': 0, 'METER_Y_CTB_InstRealPower': 0, 'METER_Y_CTC_I': 0, 'METER_Y_CTC_InstReactivePower': 0, 'METER_Y_CTC_InstRealPower': 0, 'METER_Y_LifetimeEnergyExport': None, 'METER_Y_LifetimeEnergyImport': None, 'METER_Y_VL1N': 236.1, 'METER_Y_VL2N': 8, 'METER_Y_VL3N': 1.51, 'SYNC_ExternallyPowered': None, 'SYNC_SiteSwitchEnabled': None, 'alerts': [], 'componentParentDin': 'STSTSM--1707000-30-L--TG1252600023PG', 'firmwareVersion': None, 'manufacturer': 'TESLA', 'partNumber': '1493315-02-H', 'serialNumber': 'JBL25163Y2H0EY', 'teslaEnergyEcuAttributes': {'ecuType': 259}}, 'TEPOD--1707000-30-L--TG1252600023PG': {'alerts': [], 'POD_nom_energy_remaining': 8680, 'POD_nom_energy_to_be_charged': 5700, 'POD_nom_full_pack_energy': 14380}, 'PVAC--1707000-30-L--TG1252600023PG': {'PVAC_Fout': 50.05, 'PVAC_Vout': 237.20000000000002, 'PVAC_VL1Ground': 118.60000000000001, 'PVAC_VL2Ground': 118.60000000000001, 'PVAC_Pout': -2460, 'PVAC_State': 'AcMode_GridFollowing', 'PVAC_PvState_A': 'Pv_Active', 'PVAC_PVMeasuredVoltage_A': 416, 'PVAC_PVCurrent_A': 2.0999999999999996, 'PVAC_PVMeasuredPower_A': 873.5999999999999, 'manufacturer': 'TESLA', 'partNumber': '1707000-30-L', 'serialNumber': 'TG1252600023PG', 'PVAC_PvState_B': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_B': 416, 'PVAC_PVCurrent_B': 1.9999999999999998, 'PVAC_PVMeasuredPower_B': 831.9999999999999, 'PVAC_PvState_C': 'Pv_Active', 'PVAC_PVMeasuredVoltage_C': 280, 'PVAC_PVCurrent_C': 2.0999999999999996, 'PVAC_PVMeasuredPower_C': 587.9999999999999, 'PVAC_PvState_D': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_D': 280, 'PVAC_PVCurrent_D': 1.9999999999999998, 'PVAC_PVMeasuredPower_D': 559.9999999999999, 'PVAC_PvState_E': 'Pv_Active', 'PVAC_PVMeasuredVoltage_E': 0, 'PVAC_PVCurrent_E': 0, 'PVAC_PVMeasuredPower_E': 0, 'PVAC_PvState_F': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_F': 0, 'PVAC_PVCurrent_F': 0, 'PVAC_PVMeasuredPower_F': 0}, 'PVS--1707000-30-L--TG1252600023PG': {'PVS_StringA_Connected': True, 'PVS_StringB_Connected': True, 'PVS_StringC_Connected': True, 'PVS_StringD_Connected': True, 'PVS_StringE_Connected': True, 'PVS_StringF_Connected': True}, 'TEPINV--1707000-30-L--TG1252600023PG': {'PINV_Fout': 50.05, 'PINV_Vout': 237.20000000000002, 'PINV_VSplit1': 118.60000000000001, 'PINV_VSplit2': 118.60000000000001, 'PINV_Pout': -2.46, 'PINV_State': 'AcMode_GridFollowing'}}
-    # logger.info(f"vitals={pw_api.vitals()}")
-
-    # INFO:powerwall2mqtt:alerts=['SystemConnectedToGrid', 'FWUpdateSucceeded']
-    # logger.info(f"alerts={pw_api.alerts()}")
-
-    # INFO:powerwall2mqtt:site_name=My Home
-    # logger.info(f"site_name={pw_api.site_name()}")
-
-    # INFO:powerwall2mqtt:status={'din': '1707000-30-L--TG1252600023PG', 'start_time': '2026-03-16T17:03:05+13:00', 'up_time_seconds': None, 'is_new': False, 'version': '26.2.1 a7456b0a', 'git_hash': None, 'commission_count': 0, 'device_type': None, 'teg_type': 'unknown', 'sync_type': 'unknown', 'cellular_disabled': False, 'can_reboot': True}
-    # logger.info(f"status={pw_api.status()}")
-    pass
+    ]
 
 
-def main():
+async def main():
     logger = logging.getLogger("powerwall2mqtt")
-    poll_time_sec = int(os.getenv('POLL_TIME_S', "10"))
 
     try:
         pw_api = get_pw_api()
@@ -272,6 +249,8 @@ def main():
     except (ConnectionRefusedError, OSError) as e:
         logger.error(f"Failed to connect to MQTT broker: {e}")
         exit(1)
+
+    discovery_prefix = os.getenv('MQTT_HA_PREFIX', "homeassistant")
 
     # INFO:powerwall2mqtt:status={'din': '1707000-30-L--TG1252600023PG', 'start_time': '2026-03-16T17:03:05+13:00', 'up_time_seconds': None, 'is_new': False, 'version': '26.2.1 a7456b0a', 'git_hash': None, 'commission_count': 0, 'device_type': None, 'teg_type': 'unknown', 'sync_type': 'unknown', 'cellular_disabled': False, 'can_reboot': True}
     status = pw_api.status()
@@ -287,17 +266,31 @@ def main():
         manufacturer="Tesla",
     )
 
-    try:
+    async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall], list[HaEntity]]):
         while True:
-            logger.info("Polling...")
-            fetch_pw_data(
-                ha_device=ha_device,
-                pw_api=pw_api,
-                mqtt=mqtt,
-                logger=logger,
-                discovery_prefix=os.getenv('MQTT_HA_PREFIX', "homeassistant")
-            )
-            time.sleep(poll_time_sec)
+            entities = entities_lookup_fn(pw_api)
+            for entity in entities:
+                ha_device.register_entity(entity)
+                mqtt.publish(
+                    topic=entity.state_topic(ha_device.device_id, discovery_prefix),
+                    payload=entity.lookup(),
+                    retain=True,
+                )
+            await asyncio.sleep(duration_sec)
+
+    async def update_device_info():
+        while True:
+            publish_ha_device(ha_device, discovery_prefix, mqtt)
+            await asyncio.sleep(5)
+
+    try:
+        await asyncio.gather(
+            update_device_info(),
+            poll(1, get_power_entities),
+            poll(5, get_battery_entities),
+            poll(5, get_strings_entities),
+            poll(10, get_battery_blocks_entities),
+        )
     except KeyboardInterrupt:
         logger.info("Stopping...")
     finally:
@@ -306,4 +299,4 @@ def main():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    main()
+    asyncio.run(main())
