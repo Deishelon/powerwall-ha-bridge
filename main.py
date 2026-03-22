@@ -1,7 +1,6 @@
 import asyncio
 import json
 import datetime
-from logging import Logger
 from typing import Callable
 
 import pypowerwall
