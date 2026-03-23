@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/powerwall2mqtt.iml" filepath="$PROJECT_DIR$/.idea/powerwall2mqtt.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/powerwall-ha-bridge.iml" filepath="$PROJECT_DIR$/.idea/powerwall-ha-bridge.iml" />
     </modules>
   </component>
 </project>
