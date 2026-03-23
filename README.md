@@ -51,8 +51,8 @@ The value is from the sticker (Wi-Fi password) on the Powerwall.
 | `MQTT_PASSWORD`         | MQTT password                        |                             |
 | `MQTT_CLIENT_ID`        | MQTT client ID                       | `powerwall-ha-bridge`       |
 | `MQTT_HA_PREFIX`        | HA discovery prefix                  | `homeassistant`             |
-| `HA_DEVICE_ID_PREFIX`   | Custom prefix for device id entities |                             |
-| `HA_DEVICE_NAME_PREFIX` | Custom prefix for device name        |                             |
+| `HA_DEVICE_ID_PREFIX`   | Custom prefix for device id entities | `pw-ha-bridge`              |
+| `HA_DEVICE_NAME_PREFIX` | Custom prefix for device name        | `Powerwall`                 |
 
 ## Home Assistant Setup
 

@@ -35,9 +35,9 @@ class HaDevice:
                 "model": self.model,
             },
             "origin": {
-                "name": "powerwall2mqtt",
+                "name": "pw-ha-bridge",
                 "sw_version": "1.0",
-                "support_url": "https://github.com/Deishelon/powerwall2mqtt"
+                "support_url": "https://github.com/Deishelon/pw-ha-bridge"
             },
             "components": {
                 entity.component_id: entity.get_discovery_config(self.device_id, discovery_prefix) for entity in

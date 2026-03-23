@@ -251,11 +251,11 @@ async def main():
 
     discovery_prefix = os.getenv('MQTT_HA_PREFIX', "homeassistant")
 
-    ha_device_id_prefix = os.getenv('HA_DEVICE_ID_PREFIX', "")
+    ha_device_id_prefix = os.getenv('HA_DEVICE_ID_PREFIX', "pw-ha-bridge")
     if ha_device_id_prefix != "":
         ha_device_id_prefix += "-"
 
-    ha_device_name_prefix = os.getenv('HA_DEVICE_NAME_PREFIX', "")
+    ha_device_name_prefix = os.getenv('HA_DEVICE_NAME_PREFIX', "Powerwall")
     if ha_device_name_prefix != "":
         ha_device_name_prefix += "-"
 
@@ -274,8 +274,8 @@ async def main():
     )
 
     async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall], list[HaEntity]]):
-        try:
-            while True:
+        while True:
+            try:
                 entities = entities_lookup_fn(pw_api)
                 for entity in entities:
                     ha_device.register_entity(entity)
@@ -288,9 +288,9 @@ async def main():
                     except Exception as err:
                         logger.error(f"Failed to lookup entity {entity.component_id}: {err}")
                         continue
-        except Exception as err:
-            logger.error(f"Error while fetching entities: {err}")
-        await asyncio.sleep(duration_sec)
+            except Exception as err:
+                logger.error(f"Error while fetching entities: {err}")
+            await asyncio.sleep(duration_sec)
 
     async def update_device_info():
         while True:
