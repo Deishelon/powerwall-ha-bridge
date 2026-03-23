@@ -17,14 +17,12 @@ class HaDevice:
         self.manufacturer = manufacturer
         self.entities: List[HaEntity] = []
 
-
     def register_entity(self, entity: HaEntity):
         for index, existing_entity in enumerate(self.entities):
             if existing_entity.component_id == entity.component_id:
                 self.entities[index] = entity
                 return
         self.entities.append(entity)
-
 
     def get_discovery(self, entities: List[HaEntity], discovery_prefix: str):
         payload = {
