@@ -13,6 +13,12 @@ format.
 - **Solar Strings/Arrays**: Voltage, current, power per string/array.
 - **HA auto-discovery**: Entities appear automatically in Home Assistant.
 
+### Example Entities
+
+| ![ha-entities_1.png](assets/ha-entities_1.png) | ![ha-entities_2.png](assets/ha-entities_2.png) |
+|------------------------------------------------|------------------------------------------------|
+
+
 ## Usage
 
 1. Clone the repo
