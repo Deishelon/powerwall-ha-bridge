@@ -251,6 +251,14 @@ async def main():
 
     discovery_prefix = os.getenv('MQTT_HA_PREFIX', "homeassistant")
 
+    ha_device_id_prefix = os.getenv('HA_DEVICE_ID_PREFIX', "")
+    if ha_device_id_prefix != "":
+        ha_device_id_prefix += "-"
+
+    ha_device_name_prefix = os.getenv('HA_DEVICE_NAME_PREFIX', "")
+    if ha_device_name_prefix != "":
+        ha_device_name_prefix += "-"
+
     # INFO:powerwall2mqtt:status={'din': '1707000-30-L--TG1252600023PG', 'start_time': '2026-03-16T17:03:05+13:00', 'up_time_seconds': None, 'is_new': False, 'version': '26.2.1 a7456b0a', 'git_hash': None, 'commission_count': 0, 'device_type': None, 'teg_type': 'unknown', 'sync_type': 'unknown', 'cellular_disabled': False, 'can_reboot': True}
     status = pw_api.status()
 
@@ -259,8 +267,8 @@ async def main():
         exit(1)
 
     ha_device = HaDevice(
-        device_id=f"test-{status['din']}",
-        device_name=f"test-{pw_api.site_name()}",
+        device_id=f"{ha_device_id_prefix}{status['din']}",
+        device_name=f"{ha_device_name_prefix}{pw_api.site_name()}",
         model="Powerwall",
         manufacturer="Tesla",
     )
