@@ -78,7 +78,7 @@ The value is from the sticker (Wi-Fi password) on the Powerwall.
       is going via local API, as a result - we can pull at faster rate.
     - tesla_fleet lacks PV strings/arrays support.
 
-- [pypowerwall](https://github.com/jonasder2te/pypowerwall)
+- [pypowerwall](https://github.com/jasonacox/pypowerwall)
     - This project uses pypowerwall under the hood, as 'brains' for handling all communication with Powerwall.
     - However, pypowerwall does not offer out-of-the-box HA integration.
 
