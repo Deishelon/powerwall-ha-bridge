@@ -22,7 +22,7 @@ format.
 ## Usage
 
 1. Clone the repo
-2. Set up virtual environment (optional). `python3 -m venv venv` -> `source venv/bin/activate`
+2. Set up virtual environment (optional, but recommended). `python3 -m venv venv` -> `source venv/bin/activate`
 3. Install dependencies: `pip install -r requirements.txt`
 4. Run the script: `python powerwall2mqtt.py`
 
