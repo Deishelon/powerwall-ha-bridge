@@ -41,7 +41,7 @@ def get_pw_api():
 def get_mqtt_client():
     broker = os.getenv('MQTT_BROKER', "localhost")
     port = int(os.getenv('MQTT_PORT', "1883"))
-    client_id = os.getenv('MQTT_CLIENT_ID', "powerwall2mqtt")
+    client_id = os.getenv('MQTT_CLIENT_ID', "powerwall-ha-bridge")
     username = os.getenv('MQTT_USERNAME')
     password = os.getenv('MQTT_PASSWORD')
 
