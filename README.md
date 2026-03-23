@@ -18,7 +18,6 @@ format.
 | ![ha-entities_1.png](assets/ha-entities_1.png) | ![ha-entities_2.png](assets/ha-entities_2.png) |
 |------------------------------------------------|------------------------------------------------|
 
-
 ## Usage
 
 1. Clone the repo
@@ -71,6 +70,17 @@ The value is from the sticker (Wi-Fi password) on the Powerwall.
 1. Fork the repository
 2. PR your change
 3. Add tests if possible.
+
+## Comparison with other projects/solutions
+
+- [tesla_fleet](https://www.home-assistant.io/integrations/tesla_fleet/)
+    - While tesla_fleet offers entities with control capabilities, they are all going via cloud API, where this project
+      is going via local API, as a result - we can pull at faster rate.
+    - tesla_fleet lacks PV strings/arrays support.
+
+- [pypowerwall](https://github.com/jonasder2te/pypowerwall)
+    - This project uses pypowerwall under the hood, as 'brains' for handling all communication with Powerwall.
+    - However, pypowerwall does not offer out-of-the-box HA integration.
 
 ## Acknowledgments
 
