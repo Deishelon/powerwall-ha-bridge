@@ -1,6 +1,7 @@
 import asyncio
 import json
 import datetime
+import threading
 from typing import Callable
 
 import pypowerwall
@@ -34,8 +35,8 @@ def get_pw_api():
     password = os.getenv('POWERWALL_PASSWORD', "")
     email = os.getenv('POWERWALL_EMAIL', "")
     timezone = os.getenv('POWERWALL_TIMEZONE', os.getenv('TZ', "Pacific/Auckland"))
-
-    return pypowerwall.Powerwall(host, password, email, timezone, gw_pwd=gw_pwd, auto_select=True)
+    pypowerwall.set_debug(True)
+    return pypowerwall.Powerwall(host, password, email, timezone, gw_pwd=gw_pwd, auto_select=True, poolmaxsize=1)
 
 
 def get_mqtt_client():
@@ -273,10 +274,13 @@ async def main():
         manufacturer="Tesla",
     )
 
+    mutex = threading.Lock()
+
     async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall], list[HaEntity]]):
         while True:
             try:
-                entities = entities_lookup_fn(pw_api)
+                with mutex:
+                    entities = entities_lookup_fn(pw_api)
                 for entity in entities:
                     ha_device.register_entity(entity)
                     try:
@@ -295,7 +299,7 @@ async def main():
     async def update_device_info():
         while True:
             publish_ha_device(ha_device, discovery_prefix, mqtt)
-            await asyncio.sleep(5)
+            await asyncio.sleep(30)
 
     try:
         await asyncio.gather(
