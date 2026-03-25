@@ -253,6 +253,7 @@ async def main():
     data_fetch_logger = logging.getLogger("fetcher")
 
     try:
+        logger.info("Connecting to Powerwall...")
         pw_api = get_pw_api()
     except Exception as e:
         logger.error(f"Failed to connect to Powerwall: {e}")
