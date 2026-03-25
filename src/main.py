@@ -2,6 +2,7 @@ import asyncio
 import json
 import datetime
 import threading
+from logging import Logger
 from typing import Callable
 
 import pypowerwall
@@ -35,7 +36,7 @@ def get_pw_api():
     password = os.getenv('POWERWALL_PASSWORD', "")
     email = os.getenv('POWERWALL_EMAIL', "")
     timezone = os.getenv('POWERWALL_TIMEZONE', os.getenv('TZ', "Pacific/Auckland"))
-    pypowerwall.set_debug(True)
+    # pypowerwall.set_debug(True)
     return pypowerwall.Powerwall(host, password, email, timezone, gw_pwd=gw_pwd, auto_select=True, poolmaxsize=1)
 
 
@@ -58,7 +59,9 @@ def publish_ha_device(ha_device: HaDevice, discovery_prefix: str, mqtt: MqttClie
     )
 
 
-def get_power_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
+def get_power_entities(pw_api: pypowerwall.Powerwall, logger: Logger) -> list[HaEntity]:
+    logger.info("Fetch get_power_entities")
+
     # {'site': -14, 'solar': 2200, 'battery': 344, 'load': 2529}
     # {'site': 83, 'solar': 2628, 'battery': -122, 'load': 2610.25}
     power = pw_api.power()
@@ -108,7 +111,9 @@ def get_power_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
     ]
 
 
-def get_strings_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
+def get_strings_entities(pw_api: pypowerwall.Powerwall, logger: Logger) -> list[HaEntity]:
+    logger.info("Fetch get_strings_entities")
+
     # strings(verbose=False)={'A': {'State': 'Pv_Active', 'Voltage': 414, 'Current': 2.05, 'Power': 848.6999999999999, 'Connected': True}, 'B': {'State': 'Pv_Active_Parallel', 'Voltage': 414, 'Current': 1.9499999999999997, 'Power': 807.2999999999998, 'Connected': True}, 'C': {'State': 'Pv_Active', 'Voltage': 278, 'Current': 2.0999999999999996, 'Power': 583.8, 'Connected': True}, 'D': {'State': 'Pv_Active_Parallel', 'Voltage': 278, 'Current': 1.9999999999999998, 'Power': 555.9999999999999, 'Connected': True}, 'E': {'State': 'Pv_Active', 'Voltage': 0, 'Current': 0, 'Power': 0, 'Connected': True}, 'F': {'State': 'Pv_Active_Parallel', 'Voltage': 0, 'Current': 0, 'Power': 0, 'Connected': True}}
     # strings(verbose=True)={'PVAC--1707000-30-L--TG1252600023PG': {'PVAC_Pout': -2350, 'PVAC_PvState_A': 'Pv_Active', 'PVAC_PVMeasuredVoltage_A': 414, 'PVAC_PVCurrent_A': 2.05, 'PVAC_PVMeasuredPower_A': 848.6999999999999, 'PVAC_PvState_B': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_B': 414, 'PVAC_PVCurrent_B': 1.9499999999999997, 'PVAC_PVMeasuredPower_B': 807.2999999999998, 'PVAC_PvState_C': 'Pv_Active', 'PVAC_PVMeasuredVoltage_C': 278, 'PVAC_PVCurrent_C': 2.0999999999999996, 'PVAC_PVMeasuredPower_C': 583.8, 'PVAC_PvState_D': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_D': 278, 'PVAC_PVCurrent_D': 1.9999999999999998, 'PVAC_PVMeasuredPower_D': 555.9999999999999, 'PVAC_PvState_E': 'Pv_Active', 'PVAC_PVMeasuredVoltage_E': 0, 'PVAC_PVCurrent_E': 0, 'PVAC_PVMeasuredPower_E': 0, 'PVAC_PvState_F': 'Pv_Active_Parallel', 'PVAC_PVMeasuredVoltage_F': 0, 'PVAC_PVCurrent_F': 0, 'PVAC_PVMeasuredPower_F': 0, 'PVS_StringA_Connected': True, 'PVS_StringB_Connected': True, 'PVS_StringC_Connected': True, 'PVS_StringD_Connected': True, 'PVS_StringE_Connected': True, 'PVS_StringF_Connected': True}}
     strings = pw_api.strings()
@@ -151,7 +156,9 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
     return entities
 
 
-def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
+def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall, logger: Logger) -> list[HaEntity]:
+    logger.info("Fetch get_battery_blocks_entities")
+
     # battery_blocks={'TG1252600023PG': {'Type': '', 'PackagePartNumber': '1707000-30-L', 'disabled_reasons': [], 'pinv_state': 'AcMode_GridFollowing', 'pinv_grid_state': None, 'nominal_energy_remaining': 8680, 'nominal_full_pack_energy': 14380, 'p_out': -2.41, 'q_out': None, 'v_out': 237, 'f_out': 50.05, 'i_out': None, 'energy_charged': None, 'energy_discharged': None, 'off_grid': None, 'vf_mode': None, 'wobble_detected': None, 'charge_power_clamped': None, 'backup_ready': None, 'OpSeqState': None, 'version': None}}
     blocks = pw_api.battery_blocks()
     entities = list[HaEntity]()
@@ -165,7 +172,7 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
 
         # Negative=charging, Positive=discharging
         block_power_w = block_data['p_out'] * 1000
-        runtime_m = battery_runtime_minutes(block_power_w, soc, nominal_energy_remaining)
+        runtime_m = battery_runtime_minutes(power_w=block_power_w, soc=soc, capacity_wh=nominal_energy_remaining)
 
         now = datetime.datetime.now(datetime.timezone.utc)
         runtime_at = (now + datetime.timedelta(minutes=runtime_m)).isoformat()
@@ -219,7 +226,8 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]
     return entities
 
 
-def get_battery_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
+def get_battery_entities(pw_api: pypowerwall.Powerwall, logger: Logger) -> list[HaEntity]:
+    logger.info("Fetch get_battery_entities")
     return [
         HaEntity(
             component_id="battery_level",
@@ -237,6 +245,7 @@ def get_battery_entities(pw_api: pypowerwall.Powerwall) -> list[HaEntity]:
 
 async def main():
     logger = logging.getLogger("powerwall2mqtt")
+    data_fetch_logger = logging.getLogger("fetcher")
 
     try:
         pw_api = get_pw_api()
@@ -276,11 +285,11 @@ async def main():
 
     mutex = threading.Lock()
 
-    async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall], list[HaEntity]]):
+    async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall, logger], list[HaEntity]]):
         while True:
             try:
                 with mutex:
-                    entities = entities_lookup_fn(pw_api)
+                    entities = entities_lookup_fn(pw_api, data_fetch_logger)
                 for entity in entities:
                     ha_device.register_entity(entity)
                     try:
@@ -304,9 +313,9 @@ async def main():
     try:
         await asyncio.gather(
             update_device_info(),
-            poll(1, get_power_entities),
-            poll(5, get_battery_entities),
-            poll(5, get_strings_entities),
+            poll(3, get_power_entities),
+            poll(10, get_battery_entities),
+            poll(10, get_strings_entities),
             poll(10, get_battery_blocks_entities),
         )
     except KeyboardInterrupt:
