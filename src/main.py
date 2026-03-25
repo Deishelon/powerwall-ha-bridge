@@ -172,7 +172,12 @@ def get_battery_blocks_entities(pw_api: pypowerwall.Powerwall, logger: Logger) -
 
         # Negative=charging, Positive=discharging
         block_power_w = block_data['p_out'] * 1000
-        runtime_m = battery_runtime_minutes(power_w=block_power_w, soc=soc, capacity_wh=nominal_energy_remaining)
+
+        capacity_wh = nominal_energy_remaining
+        if block_power_w > 0:
+            # Reserve some battery capacity for discharging
+            capacity_wh = (nominal_energy_remaining - (nominal_energy_remaining * 0.15))
+        runtime_m = battery_runtime_minutes(power_w=block_power_w, soc=soc, capacity_wh=capacity_wh)
 
         now = datetime.datetime.now(datetime.timezone.utc)
         runtime_at = (now + datetime.timedelta(minutes=runtime_m)).isoformat()
