@@ -21,12 +21,43 @@ format.
 
 ## Usage
 
+### Run as script
+
 1. Clone the repo
-2. Set up virtual environment (optional, but recommended)
-   - `python3 -m venv venv`
-   - `source venv/bin/activate`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run the script: `python powerwall2mqtt.py`
+2. Set up a virtual environment (optional but recommended)
+    - `python3 -m venv venv`
+    - `source venv/bin/activate`
+3. Install dependencies: `pip install -r src/requirements.txt`
+4. Run the script: `python src/main.py`
+
+### Run as systemd service (Linux)
+
+To easily run the bridge in the background on Linux systems using systemd, you can use the provided install script:
+
+1. Run the install script:
+   ```bash
+   ./install.sh
+   ```
+2. Edit the generated `.env` file with your configuration:
+   ```bash
+   nano .env
+   ```
+3. Start the service:
+   ```bash
+   sudo systemctl start powerwall-ha-bridge
+   ```
+
+To view logs:
+
+```bash
+journalctl -u powerwall-ha-bridge -f
+```
+
+If you update the code via `git fetch && git pull`, simply restart the service to use the latest version:
+
+```bash
+sudo systemctl restart powerwall-ha-bridge
+```
 
 ### 1. Connecting to Powerwall
 
