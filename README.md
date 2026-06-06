@@ -11,6 +11,7 @@ format.
 - **Real-time power monitoring**: Solar generation, grid import/export, home load, battery charge/discharge.
 - **Battery details**: SoC, power, estimated runtime (time to charge, time to discharge) per battery.
 - **Solar Strings/Arrays**: Voltage, current, power per string/array.
+- **Parallel Strings**: Combine strings into single entities for easier monitoring.
 - **HA auto-discovery**: Entities appear automatically in Home Assistant.
 
 ### Example Entities
