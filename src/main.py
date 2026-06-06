@@ -120,14 +120,16 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall, logger: Logger) -> list[
 
     entities = list[HaEntity]()
 
-    for pv_id, pv_data in strings.items():
+    # Sort strings by key to ensure consistent order (A, B, C, D, E, F)
+    for pv_id in sorted(strings.keys()):
+        pv_data = strings[pv_id]
         def make_lookup(data, key):
             return lambda: data[key]
 
-        entities_for_string = [
+        entities.extend([
             HaEntity(
                 component_id=f"array{pv_id}_voltage",
-                name=f"Array {pv_id} Voltage",
+                name=f"Array Voltage - {pv_id}",
                 device_class=DeviceClass.VOLTAGE,
                 state_class=StateClass.measurement,
                 unit="V",
@@ -135,7 +137,7 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall, logger: Logger) -> list[
             ),
             HaEntity(
                 component_id=f"array{pv_id}_current",
-                name=f"Array {pv_id} Current",
+                name=f"Array Current - {pv_id}",
                 device_class=DeviceClass.CURRENT,
                 state_class=StateClass.measurement,
                 unit="A",
@@ -143,15 +145,47 @@ def get_strings_entities(pw_api: pypowerwall.Powerwall, logger: Logger) -> list[
             ),
             HaEntity(
                 component_id=f"array{pv_id}_power",
-                name=f"Array {pv_id} Power",
+                name=f"Array Power - {pv_id}",
                 device_class=DeviceClass.POWER,
                 state_class=StateClass.measurement,
                 unit="W",
                 lookup=make_lookup(pv_data, 'Power'),
             )
-        ]
-        entities.extend(entities_for_string)
-        pass
+        ])
+
+    # Parallel strings
+    parallel_pairs = [('A', 'B'), ('C', 'D'), ('E', 'F')]
+    for s1_id, s2_id in parallel_pairs:
+        if s1_id in strings and s2_id in strings:
+            s1_data = strings[s1_id]
+            s2_data = strings[s2_id]
+
+            # Check if second string is in parallel mode
+            if s2_data.get('State') == 'Pv_Active_Parallel':
+                combined_id = f"{s1_id}{s2_id}"
+                combined_name = f"{s1_id}+{s2_id}"
+
+                def make_combined_lookup(d1, d2, key):
+                    return lambda: d1[key] + d2[key]
+
+                entities.extend([
+                    HaEntity(
+                        component_id=f"parallel_array{combined_id}_current",
+                        name=f"Parallel Array Current - {combined_name}",
+                        device_class=DeviceClass.CURRENT,
+                        state_class=StateClass.measurement,
+                        unit="A",
+                        lookup=make_combined_lookup(s1_data, s2_data, 'Current'),
+                    ),
+                    HaEntity(
+                        component_id=f"parallel_array{combined_id}_power",
+                        name=f"Parallel Array Power - {combined_name}",
+                        device_class=DeviceClass.POWER,
+                        state_class=StateClass.measurement,
+                        unit="W",
+                        lookup=make_combined_lookup(s1_data, s2_data, 'Power'),
+                    )
+                ])
 
     return entities
 
