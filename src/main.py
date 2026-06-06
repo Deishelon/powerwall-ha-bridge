@@ -325,7 +325,9 @@ async def main():
 
     mutex = threading.Lock()
 
-    async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall, logger], list[HaEntity]]):
+    async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall, logger], list[HaEntity]], initial_delay: int = 0):
+        if initial_delay > 0:
+            await asyncio.sleep(initial_delay)
         while True:
             try:
                 with mutex:
@@ -353,10 +355,10 @@ async def main():
     try:
         await asyncio.gather(
             update_device_info(),
-            poll(60, get_power_entities),
-            poll(60, get_battery_entities),
-            poll(60, get_strings_entities),
-            poll(60, get_battery_blocks_entities),
+            poll(60, get_power_entities, 0),
+            poll(60, get_battery_entities, 15),
+            poll(60, get_strings_entities, 30),
+            poll(60, get_battery_blocks_entities, 45),
         )
     except KeyboardInterrupt:
         logger.info("Stopping...")
