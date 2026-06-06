@@ -78,7 +78,7 @@ The value is from the sticker (Wi-Fi password) on the Powerwall.
 
 - [tesla_fleet](https://www.home-assistant.io/integrations/tesla_fleet/)
     - While tesla_fleet offers entities with control capabilities, they are all going via cloud API, where this project
-      is going via local API, as a result - we can pull at faster rate.
+      is going via local API, as a result - we can pull more detailed data.
     - tesla_fleet lacks PV strings/arrays support.
 
 - [pypowerwall](https://github.com/jasonacox/pypowerwall)
