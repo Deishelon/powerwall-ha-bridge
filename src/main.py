@@ -319,10 +319,10 @@ async def main():
     try:
         await asyncio.gather(
             update_device_info(),
-            poll(10, get_power_entities),
-            poll(10, get_battery_entities),
-            poll(10, get_strings_entities),
-            poll(10, get_battery_blocks_entities),
+            poll(60, get_power_entities),
+            poll(60, get_battery_entities),
+            poll(60, get_strings_entities),
+            poll(60, get_battery_blocks_entities),
         )
     except KeyboardInterrupt:
         logger.info("Stopping...")
