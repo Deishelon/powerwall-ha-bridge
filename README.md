@@ -14,10 +14,16 @@ format.
 - **Parallel Strings**: Combine strings into single entities for easier monitoring.
 - **HA auto-discovery**: Entities appear automatically in Home Assistant.
 
-### Example Entities
+### Provided Entities 
 
-| ![ha-entities_1.png](assets/ha-entities_1.png) | ![ha-entities_2.png](assets/ha-entities_2.png) |
-|------------------------------------------------|------------------------------------------------|
+|                         |                                                |
+|-------------------------|------------------------------------------------|
+| Current per Solar Array | ![ha-entities_1.png](assets/ha-entities_1.png) |
+| Power per Solar Array   | ![ha-entities_2.png](assets/ha-entities_2.png) |
+| Voltage per Solar Array | ![ha-entities_3.png](assets/ha-entities_3.png) |
+| Battery,Home,Grid data  | ![ha-entities_4.png](assets/ha-entities_4.png) |
+| Parallel Array data     | ![ha-entities_5.png](assets/ha-entities_5.png) |
+
 
 ## Usage
 
