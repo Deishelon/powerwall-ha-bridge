@@ -1,2 +1,2 @@
 paho-mqtt==2.1.0
-pypowerwall==0.14.10
+pypowerwall==0.15.10
