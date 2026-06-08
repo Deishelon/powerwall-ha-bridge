@@ -1,6 +1,7 @@
 import asyncio
 import json
 import datetime
+import time
 import threading
 from logging import Logger
 from typing import Callable
@@ -325,10 +326,11 @@ async def main():
 
     mutex = threading.Lock()
 
-    async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall, logger], list[HaEntity]], initial_delay: int = 0):
+    async def poll(duration_sec: int, entities_lookup_fn: Callable[[pypowerwall.Powerwall, Logger], list[HaEntity]], initial_delay: int):
         if initial_delay > 0:
             await asyncio.sleep(initial_delay)
         while True:
+            start_time = time.perf_counter()
             try:
                 with mutex:
                     entities = entities_lookup_fn(pw_api, data_fetch_logger)
@@ -345,6 +347,9 @@ async def main():
                         continue
             except Exception as err:
                 logger.error(f"Error while fetching entities: {err}")
+
+            duration = time.perf_counter() - start_time
+            logger.info(f"Poll for {entities_lookup_fn.__name__} took {duration:.4f} seconds")
             await asyncio.sleep(duration_sec)
 
     async def update_device_info():
